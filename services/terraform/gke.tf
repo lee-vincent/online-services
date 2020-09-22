@@ -1,29 +1,33 @@
 # This file defines a Google Kubernetes Engine cluster.
 
+# This creates the top level VPC which by itself contains no subnets or IP range
 resource "google_compute_network" "container_network" {
-  name                    = "container-network-${var.environment}"
+  name                    = "container-network-${var.environment}"     ### container-network-test
   auto_create_subnetworks = false
 }
 
+
 resource "google_compute_subnetwork" "container_subnetwork" {
-  name          = "container-subnetwork-${var.environment}"
-  ip_cidr_range = "10.2.0.0/16"
+  name          = "container-subnetwork-${var.environment}"             ### container-subnetwork-test
+  ip_cidr_range = "10.2.0.0/16"                                         ### EC2 instances get IPs from this range
   region        = var.gcloud_region
   network       = google_compute_network.container_network.self_link
 }
 
 resource "google_container_cluster" "primary" {
-  name       = "${var.k8s_cluster_name}-${var.environment}"
-  location   = var.gcloud_zone
-  network    = google_compute_network.container_network.name
-  subnetwork = google_compute_subnetwork.container_subnetwork.name
+  name       = "${var.k8s_cluster_name}-${var.environment}"             ### io-online-services-test
+  location   = var.gcloud_zone                                          ### us-east1
+  network    = google_compute_network.container_network.name            ### container-network-test
+  subnetwork = google_compute_subnetwork.container_subnetwork.name      ### container-subnetwork-test
 
   remove_default_node_pool = true
   initial_node_count       = 1
 
   ip_allocation_policy {
-    cluster_ipv4_cidr_block  = "10.0.0.0/16"
-    services_ipv4_cidr_block = "10.1.0.0/16"
+    # The IP address range for the cluster pod IPs
+    cluster_ipv4_cidr_block  = "10.0.0.0/16"                            ### Pods get IPs from this range
+    # The IP address range of the services IPs in this cluster  
+    services_ipv4_cidr_block = "10.1.0.0/16"                            ### clusterIPs for services from this range
   }
 
   master_auth {

@@ -7,6 +7,8 @@
 **/*.DotSettings.user
 **/__pycache__
 **/common.egg-info
+**/cpp
+services/csharp/SteamAuth/*.txt
 services/python/analytics-pipeline/cloud-function-*.zip
 services/terraform/.terraform/
 services/terraform/terraform.tfstate*

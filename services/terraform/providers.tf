@@ -8,6 +8,7 @@ provider "google" {
   version = "~> 3.0.0-beta.1"
 }
 
+
 # Kubernetes
 provider "kubernetes" {
   host     = google_container_cluster.primary.endpoint

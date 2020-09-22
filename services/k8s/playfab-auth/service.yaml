@@ -14,5 +14,5 @@ spec:
     name: 'grpc'
     port: 4000
     targetPort: 9000
-  type: LoadBalancer
-  loadBalancerIP: "{{your_playfab_auth_host}}" # Update
+  type: LoadBalancer    # triggers a cloud native load balancer (aws alb) to be provisioned
+  loadBalancerIP: "34.74.118.132" # Update - gives an IP to the cloud native load balancer

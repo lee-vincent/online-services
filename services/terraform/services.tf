@@ -1,4 +1,6 @@
 # This file is used to explicitly enable required Google Cloud services.
+# Allows management of a single API service for an existing Google Cloud Platform project
+
 
 resource "google_project_service" "service_usage" {
   project            = var.gcloud_project

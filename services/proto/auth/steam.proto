@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+
+option csharp_namespace = "Improbable.OnlineServices.Proto.Auth.Steam";
+
+package auth.steam;
+
+message ExchangeSteamTokenRequest {
+    string steam_token = 1;
+}
+
+message ExchangeSteamTokenResponse {
+    string player_identity_token = 1;
+}
+
+
+service AuthService {
+    rpc ExchangeSteamToken (ExchangeSteamTokenRequest) returns (ExchangeSteamTokenResponse) {
+        option (google.api.http) = {
+            post: "/v1/exchange_steam_token"
+            body: "*"
+        };
+    }
+}

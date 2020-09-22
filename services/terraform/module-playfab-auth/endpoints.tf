@@ -1,4 +1,4 @@
-# This file creates the endpoints required for the Playfab Auth service.
+# This resource creates and rolls out a Cloud Endpoints service using gRPC on google cloud
 
 resource "google_endpoints_service" "playfab_auth_endpoint" {
   service_name         = "playfab-auth-${var.environment}.endpoints.${var.gcloud_project}.cloud.goog"

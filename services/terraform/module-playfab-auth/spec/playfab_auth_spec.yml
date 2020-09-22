@@ -1,3 +1,6 @@
+# This is a service configuration file that allows the playfab auth grpc service 
+# to be managed by google Endpoints
+
 type: google.api.Service
 config_version: 3
 

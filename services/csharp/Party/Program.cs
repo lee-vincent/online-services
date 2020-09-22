@@ -60,7 +60,7 @@ namespace Party
                     {
                         Log.Information($"Successfully connected to Redis at {parsedArgs.RedisConnectionString}");
                         server.AddInterceptor(new PlayerIdentityTokenValidatingInterceptor(
-                                PlayerAuthServiceClient.Create(credentials: new PlatformRefreshTokenCredential(spatialRefreshToken)),
+                                PlayerAuthServiceClient.Create(/*put my auth server address here*/credentials: new PlatformRefreshTokenCredential(spatialRefreshToken)),
                                 memoryStoreManager.GetRawClient(Database.CACHE)
                             ))
                             .AddInterceptor(new ExceptionMappingInterceptor(new Dictionary<Type, StatusCode>

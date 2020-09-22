@@ -15,20 +15,20 @@ spec:
         app: playfab-auth
     spec:
       containers:
-      - name: esp
+      - name: esp # this is a Google-provided proxy which you use for service discovery and HTTP transcoding.
         image: gcr.io/endpoints-release/endpoints-runtime:1.38.0
         args: [
           "--http_port=9001",
           "--http2_port=9000",
-          "--service=playfab-auth-{{your_environment}}.endpoints.{{your_google_project_id}}.cloud.goog", # Update
+          "--service=playfab-auth-test.endpoints.applied-pipe-288123.cloud.goog", # Update
           "--rollout_strategy=managed",
           "--backend=grpc://127.0.0.1:4040"
         ]
         ports:
           - containerPort: 9000
-          - containerPort: 9001
+          - containerPort: 9001 
       - name: playfab-auth
-        image: gcr.io/{{your_google_project_id}}/playfab-auth # Update
+        image: gcr.io/applied-pipe-288123/playfab-auth # Update
         imagePullPolicy: Always
         ports:
         - containerPort: 4040
@@ -36,11 +36,12 @@ spec:
         - containerPort: 8080
           name: 'metrics'
           protocol: TCP
+          # # PlayFab Auth Arguments is used in the server and is set in the kubernets cli create secret generic command
         env:
-        - name: SPATIAL_REFRESH_TOKEN
+        - name: SPATIAL_REFRESH_TOKEN # PlayFab Auth Arguments
           valueFrom:
             secretKeyRef:
-              name: spatialos-refresh-token
+              name: spatialos-refresh-token # sets this environment variable with the secret
               key: service-account
         - name: SPATIAL_PROJECT
           valueFrom:
@@ -54,7 +55,7 @@ spec:
               key: playfab.title
         - name: PLAYFAB_SECRET_KEY
           valueFrom:
-            secretKeyRef:
+            secretKeyRef: # set in the cli 
               name: playfab-secret-key
               key: playfab-secret
         args:
@@ -66,26 +67,26 @@ spec:
         - --playfab_title_id
         - "$(PLAYFAB_TITLE_ID)"
         # Analytics Instrumentation Arguments
-        - --analytics.endpoint
-        - "http://analytics-{{your_environment}}.endpoints.{{your_google_project_id}}.cloud.goog:80/v1/event" # Update
-        - --analytics.allow-insecure-endpoint
-        - --analytics.config-file-path
-        - "/config/online-services-analytics-config"
-        - --analytics.gcp-key-path
-        - "/secrets/analytics-api-key"
-        - --event.environment
-        - "{{your_environment}}" # Update
-        - --event.schema
-        - "improbable"
-        volumeMounts:
-        - mountPath: /secrets/
-          name: analytics-api-key
-        - mountPath: /config/
-          name: online-services-analytics-config
-      volumes:
-      - name: analytics-api-key
-        secret:
-          secretName: analytics-api-key
-      - name: online-services-analytics-config
-        configMap:
-          name: online-services-analytics-config
+        #- --analytics.endpoint
+        #- "http://analytics-{{your_environment}}.endpoints.{{your_google_project_id}}.cloud.goog:80/v1/event" # Update
+        #- --analytics.allow-insecure-endpoint
+       # - --analytics.config-file-path
+        #- "/config/online-services-analytics-config"
+        #- --analytics.gcp-key-path
+        #- "/secrets/analytics-api-key"
+        #- --event.environment
+       # - "{{your_environment}}" # Update
+       # - --event.schema
+        #- "improbable"
+       # volumeMounts: # where to mount the volumes into Containers
+       # - mountPath: /secrets/
+       #   name: analytics-api-key
+       # - mountPath: /config/
+       #   name: online-services-analytics-config
+   #   volumes: # volumes to provide to the pod
+    #  - name: analytics-api-key
+    #    secret:
+     #     secretName: analytics-api-key
+     # - name: online-services-analytics-config
+     #   configMap:
+     #     name: online-services-analytics-config

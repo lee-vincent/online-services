@@ -20,7 +20,7 @@ namespace Improbable.OnlineServices.Base.Server
         [Option("metrics_port", HelpText = "Port to expose Prometheus Metrics.", Default = 8080)]
         public int MetricsPort { get; set; }
 
-        [Option("disable_prometheus", HelpText = "If present, Prometheus will not be used for gathering metrics.", Default = false)]
+        [Option("disable_prometheus", HelpText = "If present, Prometheus will not be used for gathering metrics.", Default = true)]
         public bool DisablePrometheus { get; set; }
     }
 }

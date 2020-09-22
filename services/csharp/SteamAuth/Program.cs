@@ -2,43 +2,44 @@
 using System.Threading;
 using System.Threading.Tasks;
 using CommandLine;
-using Improbable.OnlineServices.Base.Server;
+using Improbable.OnlineServices.Base.Server; // the gRPC base server
 using Improbable.OnlineServices.Common;
 using Improbable.OnlineServices.Common.Analytics;
 using Improbable.OnlineServices.Common.Analytics.ExceptionHandlers;
-using Improbable.OnlineServices.Proto.Auth.PlayFab;
+using Improbable.OnlineServices.Proto.Auth.Steam;  // this is generated from the proto file i created for types of steam authentication messages
 using Improbable.SpatialOS.Platform.Common;
 using Improbable.SpatialOS.PlayerAuth.V2Alpha1;
 using Mono.Unix;
-using PlayFab;
 using Mono.Unix.Native;
 using Serilog;
 using Serilog.Formatting.Compact;
 
-
-
-namespace PlayFabAuth
+namespace SteamAuth
 {
-    public class PlayFabAuthArguments : CommandLineArgs, IAnalyticsCommandLineArgs
+    public class SteamAuthArguments : CommandLineArgs, IAnalyticsCommandLineArgs
     {
-        [Option("spatial_project", HelpText = "Spatial project name", Required = true)]
-        public string SpatialProject { get; set; }
+        
+        [Option("project_name", HelpText = "Project name", Required = true)]
+        public string ProjectName { get; set; }
 
-        [Option("playfab_title_id", HelpText = "PlayFab title ID", Required = true)]
-        public string PlayFabTitleId { get; set; }
+        [Option("STEAM_APP_ID", HelpText = "Steam App ID", Required = true)]
+        public string STEAM_APP_ID { get; set; }
 
-        public string Endpoint { get; set; }
+
         public bool AllowInsecureEndpoints { get; set; }
+        // dont need to enter any of these in command line because im not passing
+        // an AnalyticsSender to SteamAuthImpl constructor
+        public string Endpoint { get; set; }
         public string ConfigPath { get; set; }
         public string GcpKeyPath { get; set; }
         public string Environment { get; set; }
         public string EventSchema { get; set; }
     }
 
-    public class Program
+    class Program
     {
-        private const string SpatialRefreshTokenEnvironmentVariable = "SPATIAL_REFRESH_TOKEN";
-        private const string PlayFabSecretKeyEnvironmentVariable = "PLAYFAB_SECRET_KEY";
+        private const string SteamSymmetricKeyEnvironmentVariable = "STEAM_SYMMETRIC_KEY";
+
 
         public static void Main(string[] args)
         {
@@ -47,39 +48,34 @@ namespace PlayFabAuth
             ThreadPool.GetMaxThreads(out var workerThreads, out var ioThreads);
             ThreadPool.SetMinThreads(workerThreads, ioThreads);
 
-            Parser.Default.ParseArguments<PlayFabAuthArguments>(args)
+            Parser.Default.ParseArguments<SteamAuthArguments>(args)
                 .WithParsed(parsedArgs =>
                 {
                     Log.Logger = new LoggerConfiguration()
                         .WriteTo.Console(new RenderedCompactJsonFormatter())
                         .Enrich.FromLogContext()
                         .CreateLogger();
-                    //spatial service account token i set up and entered into kubernets 
-                    var spatialRefreshToken = Secrets.GetEnvSecret(SpatialRefreshTokenEnvironmentVariable).Trim();
-                    var playfabDeveloperKey = Secrets.GetEnvSecret(PlayFabSecretKeyEnvironmentVariable).Trim();
 
-                    PlayFabSettings.DeveloperSecretKey = playfabDeveloperKey;
-                    PlayFabSettings.TitleId = parsedArgs.PlayFabTitleId;
-
-                    IAnalyticsSender analyticsSender = new AnalyticsSenderBuilder("playfab_auth")
-                        .WithCommandLineArgs(parsedArgs)
-                        .With(new LogExceptionStrategy(Log.Logger))
-                        .Build();
-
+                    var steamDeveloperKey = Secrets.GetEnvSecret(SteamSymmetricKeyEnvironmentVariable).Trim();
+                  
 
                     var server = GrpcBaseServer.Build(parsedArgs);
                     server.AddService(AuthService.BindService(
-                        new PlayFabAuthImpl(
-                            parsedArgs.SpatialProject,
+                        new SteamAuthImpl(
+                            parsedArgs.ProjectName,
                             PlayerAuthServiceClient.Create(
-                                /*endpoint: new PlatformApiEndpoint("playerauth.api.improbable.io", 443),*/
-                                credentials: new PlatformRefreshTokenCredential(spatialRefreshToken)),
-                            analyticsSender)
+                            // TODO: this is an example i need to change this later
+                            // PlatformApiEndpoint uses google.api.gax which is GCP native so i need to change this
+                            new PlatformApiEndpoint("steamauth.api.com", 443, true))
+                            /*endpoint: new PlatformApiEndpoint("playerauth.api.improbable.io", 443),*/
+                            //credentials: new PlatformRefreshTokenCredential(spatialRefreshToken)),
+                            //analyticsSender
+                            )
                     ));
 
                     var serverTask = Task.Run(() => server.Start());
                     var signalTask = Task.Run(() => UnixSignal.WaitAny(new[] { new UnixSignal(Signum.SIGINT), new UnixSignal(Signum.SIGTERM) }));
-                    Log.Information("PlayFab authentication server started up");
+                    Log.Information("Steam authentication server started up");
                     Task.WaitAny(serverTask, signalTask);
 
                     if (signalTask.IsCompleted)

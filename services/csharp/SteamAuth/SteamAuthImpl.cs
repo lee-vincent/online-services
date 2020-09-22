@@ -1,7 +1,5 @@
-﻿using Improbable.OnlineServices.Proto.Auth.PlayFab;
+﻿using Improbable.OnlineServices.Proto.Auth.Steam;
 using Grpc.Core;
-using PlayFab;
-using PlayFab.ServerModels;
 using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
@@ -9,27 +7,31 @@ using Improbable.OnlineServices.Common.Analytics;
 using Serilog;
 using Improbable.SpatialOS.PlayerAuth.V2Alpha1;
 
-namespace PlayFabAuth
+
+// server side implementation of the SteamAuth service
+
+namespace SteamAuth
 {
-    public class PlayFabAuthImpl : AuthService.AuthServiceBase
+    public class SteamAuthImpl : AuthService.AuthServiceBase
     {
+      
         private readonly string _project;
         private readonly PlayerAuthServiceClient _authServiceClient;
         private readonly AnalyticsSenderClassWrapper _analytics;
 
-        public PlayFabAuthImpl(string project, PlayerAuthServiceClient authServiceClient, IAnalyticsSender analytics = null)
+        // This service is instantiated by Program.cs (base server)
+        public SteamAuthImpl(string project, PlayerAuthServiceClient authServiceClient, IAnalyticsSender analytics = null)
         {
             _project = project;
             _authServiceClient = authServiceClient;
             _analytics = (analytics ?? new NullAnalyticsSender()).WithEventClass("authentication");
         }
 
-
-        // this is the client implementation of ExchangePlayFabToken -- the server in this example is owned by Spatial and they have an implementation i cant access
-        public override Task<ExchangePlayFabTokenResponse> ExchangePlayFabToken(ExchangePlayFabTokenRequest request,
+        public override Task<ExchangeSteamTokenResponse> ExchangeSteamToken(ExchangeSteamTokenRequest request,
             ServerCallContext context)
         {
-            UserAccountInfo userInfo;
+
+
 
             try
             {

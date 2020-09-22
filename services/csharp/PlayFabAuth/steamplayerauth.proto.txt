@@ -1,0 +1,87 @@
+CreateLoginTokenRequest
+String player_identity_token 1
+String deployment_id 2
+Message lifetime_duration 3
+String worker_type 4
+CreateLoginTokenResponse
+String login_token 1
+CreatePlayerIdentityTokenRequest
+String provider 1
+String player_identifier 2
+String project_name 3
+Message lifetime_duration 4
+String display_name 5
+Bytes metadata 6
+CreatePlayerIdentityTokenResponse
+String player_identity_token 1
+DecodePlayerIdentityTokenRequest
+String player_identity_token 1
+DecodePlayerIdentityTokenResponse
+Message player_identity_token 1
+PlayerIdentityToken
+String provider 1
+String player_identifier 2
+String project_name 3
+String display_name 5
+Bytes metadata 6
+Message issued_at_time 7
+Message expiry_time 8
+DevelopmentAuthenticationToken
+String id 1
+String project_name 2
+String description 3
+Message creation_time 4
+Message expiration_time 5
+CreateDevelopmentAuthenticationTokenRequest
+String project_name 1
+String description 2
+Message lifetime 3
+CreateDevelopmentAuthenticationTokenResponse
+Message development_authentication_token 1
+String token_secret 2
+GetDevelopmentAuthenticationTokenRequest
+String id 1
+GetDevelopmentAuthenticationTokenResponse
+Message development_authentication_token 1
+ListDevelopmentAuthenticationTokensRequest
+String project_name 1
+Bool include_expired 2
+Int32 page_size 3
+String page_token 4
+ListDevelopmentAuthenticationTokensResponse
+Message development_authentication_tokens 1
+String next_page_token 2
+UpdateDevelopmentAuthenticationTokenRequest
+String id 1
+String description 2
+Message updated_lifetime 3
+UpdateDevelopmentAuthenticationTokenResponse
+Message development_authentication_token 1
+ExpireDevelopmentAuthenticationTokenRequest
+String id 1
+ExpireDevelopmentAuthenticationTokenResponse
+--------
+--------
+PlayerAuthService
+CreateLoginToken CreateLoginTokenRequest CreateLoginTokenResponse
+CreatePlayerIdentityToken CreatePlayerIdentityTokenRequest CreatePlayerIdentityTokenResponse
+DecodePlayerIdentityToken DecodePlayerIdentityTokenRequest DecodePlayerIdentityTokenResponse
+CreateDevelopmentAuthenticationToken CreateDevelopmentAuthenticationTokenRequest CreateDevelopmentAuthenticationTokenResponse
+GetDevelopmentAuthenticationToken GetDevelopmentAuthenticationTokenRequest GetDevelopmentAuthenticationTokenResponse
+ListDevelopmentAuthenticationTokens ListDevelopmentAuthenticationTokensRequest ListDevelopmentAuthenticationTokensResponse
+UpdateDevelopmentAuthenticationToken UpdateDevelopmentAuthenticationTokenRequest UpdateDevelopmentAuthenticationTokenResponse
+ExpireDevelopmentAuthenticationToken ExpireDevelopmentAuthenticationTokenRequest ExpireDevelopmentAuthenticationTokenResponse
+
+relationship between SteamAuthImpl SteamAuthCommandlineArguements Program.cs
+and the dockerfile and kubernetes deployment.yaml
+
+Description				Docker field name	Kubernetes field name
+The command run by the container	Entrypoint		command	
+The arguments passed to the command	Cmd			args
+
+When you override the default Entrypoint and Cmd, these rules apply:
+
+If you do not supply command or args for a Container, the defaults defined in the Docker image are used.
+If you supply a command but no args for a Container, only the supplied command is used. The default EntryPoint and the default Cmd defined in the Docker image are ignored.
+If you supply only args for a Container, the default Entrypoint defined in the Docker image is run with the args that you supplied.
+If you supply a command and args, the default Entrypoint and the default Cmd defined in the Docker image are ignored. Your command is run with your args.

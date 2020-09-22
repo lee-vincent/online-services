@@ -14,5 +14,5 @@ spec:
     name: 'grpc'
     port: 4000
     targetPort: 9000
-  type: LoadBalancer
+  type: LoadBalancer 
   loadBalancerIP: "{{your_gateway_host}}" # Update

@@ -30,7 +30,7 @@ namespace SampleClient
     class Program
     {
         private const string LocalEndPointUrlFormat = "localhost:{0}";
-        private const string CloudEndPointUrlFormat = "{0}.endpoints.{1}.cloud.goog:4000";
+        private const string CloudEndPointUrlFormat = "{0}-test.endpoints.{1}.cloud.goog:4000";
         private const string PitRequestHeaderName = "player-identity-token";
 
         static void Main(string[] args)
@@ -53,7 +53,11 @@ namespace SampleClient
 
                     var playerId = RandomString(15);
                     Console.WriteLine($"Using a randomly generated PlayFab player ID: {playerId}");
+                    Console.WriteLine($"authServiceUrl: {authServiceUrl}");
 
+                    //This is the type of code i would put into the game because it is responsible
+                    // for talking directly to steam for encrypted app ticket and then sending it 
+                    // to my servers to authenticate and exchange got a player identity token
                     // First, get a token from PlayFab.
                     PlayFabSettings.staticSettings.TitleId = parsedArgs.PlayFabTitleId;
                     var playFabLoginTask = PlayFabClientAPI.LoginWithCustomIDAsync(new LoginWithCustomIDRequest
@@ -82,34 +86,36 @@ namespace SampleClient
                     });
                     Console.WriteLine("Got a PIT.");
                     var pitMetadata = new Metadata { { PitRequestHeaderName, authResult.PlayerIdentityToken } };
+                    Console.WriteLine($"authResult.PlayerIdentityToken: {authResult.PlayerIdentityToken}");
 
                     // Create a single-player party for the player.
-                    var partyClient = new PartyService.PartyServiceClient(
-                        new Channel(partyServiceUrl, ChannelCredentials.Insecure));
-                    var partyResponse =
-                        partyClient.CreateParty(new CreatePartyRequest { MinMembers = 1, MaxMembers = 1 }, pitMetadata);
-                    Console.WriteLine($"Created a new party with id {partyResponse.PartyId}.");
+                    /*  var partyClient = new PartyService.PartyServiceClient(
+                          new Channel(partyServiceUrl, ChannelCredentials.Insecure));
+                      var partyResponse =
+                          partyClient.CreateParty(new CreatePartyRequest { MinMembers = 1, MaxMembers = 1 }, pitMetadata);
+                      Console.WriteLine($"Created a new party with id {partyResponse.PartyId}.");
 
-                    var gatewayEndpoint = gatewayServiceUrl;
-                    var gatewayClient =
-                        new GatewayService.GatewayServiceClient(new Channel(gatewayEndpoint,
-                            ChannelCredentials.Insecure));
+                      var gatewayEndpoint = gatewayServiceUrl;
+                      var gatewayClient =
+                          new GatewayService.GatewayServiceClient(new Channel(gatewayEndpoint,
+                              ChannelCredentials.Insecure));
 
-                    gatewayClient.Join(new JoinRequest
-                    {
-                        MatchmakingType = "match"
-                    }, pitMetadata);
-                    Console.WriteLine("Joined queue; waiting for match.");
+                      gatewayClient.Join(new JoinRequest
+                      {
+                          MatchmakingType = "match"
+                      }, pitMetadata);
+                      Console.WriteLine("Joined queue; waiting for match.");
 
-                    GetJoinStatusResponse resp = null;
-                    while (resp == null || !resp.Complete)
-                    {
-                        Thread.Sleep(1000);
-                        resp = gatewayClient.GetJoinStatus(new GetJoinStatusRequest { PlayerId = playFabId }, pitMetadata);
-                    }
+                      GetJoinStatusResponse resp = null;
+                      while (resp == null || !resp.Complete)
+                      {
+                          Thread.Sleep(1000);
+                          resp = gatewayClient.GetJoinStatus(new GetJoinStatusRequest { PlayerId = playFabId }, pitMetadata);
+                      }
 
-                    Console.WriteLine(
-                        $"Got deployment: {resp.DeploymentName}. Login token: [{resp.LoginToken}].");
+                      Console.WriteLine(
+                          $"Got deployment: {resp.DeploymentName}. Login token: [{resp.LoginToken}].");
+                    */
                 });
         }
 

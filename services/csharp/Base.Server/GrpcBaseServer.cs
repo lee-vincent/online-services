@@ -16,6 +16,7 @@ namespace Improbable.OnlineServices.Base.Server
         private readonly Grpc.Core.Server _server;
         private readonly List<Interceptor> _interceptorChain = new List<Interceptor>();
 
+        // to construct the server you call build
         public static GrpcBaseServer Build(CommandLineArgs args)
         {
             Logger.Info(args.ToString);
@@ -40,7 +41,9 @@ namespace Improbable.OnlineServices.Base.Server
             {
                 credentials = new SslServerCredentials(new[]
                 {
-                    new KeyCertificatePair(File.ReadAllText(sslCertChainPath), File.ReadAllText(sslPrivateKeyPath))
+                    // PEM encoded certificate chain.
+                    // PEM encoded private key.
+        new KeyCertificatePair(File.ReadAllText(sslCertChainPath), File.ReadAllText(sslPrivateKeyPath))
                 });
             }
 
