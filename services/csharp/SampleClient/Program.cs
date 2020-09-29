@@ -89,7 +89,7 @@ namespace SampleClient
                     Console.WriteLine($"authResult.PlayerIdentityToken: {authResult.PlayerIdentityToken}");
 
                     // Create a single-player party for the player.
-                    /*  var partyClient = new PartyService.PartyServiceClient(
+                      var partyClient = new PartyService.PartyServiceClient(
                           new Channel(partyServiceUrl, ChannelCredentials.Insecure));
                       var partyResponse =
                           partyClient.CreateParty(new CreatePartyRequest { MinMembers = 1, MaxMembers = 1 }, pitMetadata);
@@ -115,7 +115,7 @@ namespace SampleClient
 
                       Console.WriteLine(
                           $"Got deployment: {resp.DeploymentName}. Login token: [{resp.LoginToken}].");
-                    */
+                    
                 });
         }
 

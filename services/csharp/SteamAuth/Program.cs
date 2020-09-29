@@ -18,17 +18,14 @@ namespace SteamAuth
 {
     public class SteamAuthArguments : CommandLineArgs, IAnalyticsCommandLineArgs
     {
-        
-        [Option("project_name", HelpText = "Project name", Required = true)]
+        [Option("project_name", HelpText = "Game Name", Required = true)]
         public string ProjectName { get; set; }
 
-        [Option("STEAM_APP_ID", HelpText = "Steam App ID", Required = true)]
-        public string STEAM_APP_ID { get; set; }
+        [Option("steam_appid", HelpText = "Steam App ID", Required = true)]
+        public string SteamAppId { get; set; }
 
 
         public bool AllowInsecureEndpoints { get; set; }
-        // dont need to enter any of these in command line because im not passing
-        // an AnalyticsSender to SteamAuthImpl constructor
         public string Endpoint { get; set; }
         public string ConfigPath { get; set; }
         public string GcpKeyPath { get; set; }
@@ -38,8 +35,7 @@ namespace SteamAuth
 
     class Program
     {
-        private const string SteamSymmetricKeyEnvironmentVariable = "STEAM_SYMMETRIC_KEY";
-
+        private const string SteamSymmetricKey = "STEAM_SYMMETRIC_KEY";
 
         public static void Main(string[] args)
         {
@@ -56,22 +52,27 @@ namespace SteamAuth
                         .Enrich.FromLogContext()
                         .CreateLogger();
 
-                    var steamDeveloperKey = Secrets.GetEnvSecret(SteamSymmetricKeyEnvironmentVariable).Trim();
+                    var steamDeveloperKey = Secrets.GetEnvSecret(SteamSymmetricKey).Trim();
                   
 
                     var server = GrpcBaseServer.Build(parsedArgs);
-                    server.AddService(AuthService.BindService(
-                        new SteamAuthImpl(
+                    server.AddService
+                    (
+                        AuthService.BindService
+                        (
+                            new SteamAuthImpl
+                        (
                             parsedArgs.ProjectName,
-                            PlayerAuthServiceClient.Create(
-                            // TODO: this is an example i need to change this later
-                            // PlatformApiEndpoint uses google.api.gax which is GCP native so i need to change this
-                            new PlatformApiEndpoint("steamauth.api.com", 443, true))
-                            /*endpoint: new PlatformApiEndpoint("playerauth.api.improbable.io", 443),*/
-                            //credentials: new PlatformRefreshTokenCredential(spatialRefreshToken)),
-                            //analyticsSender
-                            )
-                    ));
+                            PlayerAuthServiceClient.Create
+                            ( 
+                                endpoint: new PlatformApiEndpoint(/*host*/"steamauth.api.com", /*pot*/443, /*insecure*/true),
+                                credentials: null, //new PlatformRefreshTokenCredential()
+                                settings: null
+                            ),
+                            analytics: null
+                        )
+                        )
+                    );
 
                     var serverTask = Task.Run(() => server.Start());
                     var signalTask = Task.Run(() => UnixSignal.WaitAny(new[] { new UnixSignal(Signum.SIGINT), new UnixSignal(Signum.SIGTERM) }));
