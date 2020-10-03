@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: playfab-auth
+  labels:
+    app: playfab-auth
+spec:
+  replicas: 1
+  selector:
+      matchLabels:
+        app: playfab-auth
+  template:
+    metadata:
+      labels:
+        app: playfab-auth
+    spec:
+      containers:
+      - name: esp # this is a Google-provided proxy which you use for service discovery and HTTP transcoding.
+        image: gcr.io/endpoints-release/endpoints-runtime:1.38.0
+        args: [
+          "--http_port=9001",
+          "--http2_port=9000",
+          "--service=playfab-auth-test.endpoints.applied-pipe-288123.cloud.goog", # Update
+          "--rollout_strategy=managed",
+          "--backend=grpc://127.0.0.1:4040"
+        ]
+        ports:
+          - containerPort: 9000
+          - containerPort: 9001 
+      - name: playfab-auth
+        image: gcr.io/applied-pipe-288123/playfab-auth # Update
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 4040
+          protocol: TCP
+        - containerPort: 8080
+          name: 'metrics'
+          protocol: TCP
+          # # PlayFab Auth Arguments is used in the server and is set in the kubernets cli create secret generic command
+        env:
+        - name: SPATIAL_REFRESH_TOKEN # PlayFab Auth Arguments
+          valueFrom:
+            secretKeyRef:
+              name: spatialos-refresh-token # sets this environment variable with the secret
+              key: service-account
+        - name: SPATIAL_PROJECT
+          valueFrom:
+            configMapKeyRef:
+              name: online-services-config
+              key: spatialos.project
+        - name: PLAYFAB_TITLE_ID
+          valueFrom:
+            configMapKeyRef:
+              name: online-services-config
+              key: playfab.title
+        - name: PLAYFAB_SECRET_KEY
+          valueFrom:
+            secretKeyRef: # set in the cli 
+              name: playfab-secret-key
+              key: playfab-secret
+        args:
+        # PlayFab Auth Arguments
+        - --grpc_service_port
+        - "4040"
+        - --spatial_project
+        - "$(SPATIAL_PROJECT)"
+        - --playfab_title_id
+        - "$(PLAYFAB_TITLE_ID)"
+        # Analytics Instrumentation Arguments
+        #- --analytics.endpoint
+        #- "http://analytics-{{your_environment}}.endpoints.{{your_google_project_id}}.cloud.goog:80/v1/event" # Update
+        #- --analytics.allow-insecure-endpoint
+       # - --analytics.config-file-path
+        #- "/config/online-services-analytics-config"
+        #- --analytics.gcp-key-path
+        #- "/secrets/analytics-api-key"
+        #- --event.environment
+       # - "{{your_environment}}" # Update
+       # - --event.schema
+        #- "improbable"
+       # volumeMounts: # where to mount the volumes into Containers
+       # - mountPath: /secrets/
+       #   name: analytics-api-key
+       # - mountPath: /config/
+       #   name: online-services-analytics-config
+   #   volumes: # volumes to provide to the pod
+    #  - name: analytics-api-key
+    #    secret:
+     #     secretName: analytics-api-key
+     # - name: online-services-analytics-config
+     #   configMap:
+     #     name: online-services-analytics-config

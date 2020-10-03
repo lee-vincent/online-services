@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: party
+  labels:
+    app: party
+spec:
+  replicas: 1
+  selector:
+      matchLabels:
+        app: party
+  template:
+    metadata:
+      labels:
+        app: party
+    spec:
+      containers:
+      - name: esp
+        image: gcr.io/endpoints-release/endpoints-runtime:1.38.0
+        args: [
+          "--http_port=9001",
+          "--http2_port=9000",
+          "--service=party-{{your_environment}}.endpoints.{{your_google_project_id}}.cloud.goog", # Update
+          "--rollout_strategy=managed",
+          "--backend=grpc://127.0.0.1:4040"
+        ]
+        ports:
+          - containerPort: 9000
+          - containerPort: 9001
+      - name: party
+        image: gcr.io/{{your_google_project_id}}/party # Update
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 4040
+          protocol: TCP
+        - containerPort: 8080
+          name: 'metrics'
+          protocol: TCP
+        env:
+        - name: SPATIAL_REFRESH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: spatialos-refresh-token
+              key: service-account
+        - name: REDIS_CONNECTION_STRING
+          valueFrom:
+            configMapKeyRef:
+              name: online-services-config
+              key: redis.connection-string
+        args:
+        # Party Arguments
+        - --grpc_service_port
+        - "4040"
+        - --redis_connection_string
+        - "$(REDIS_CONNECTION_STRING)"
+        # Analytics Instrumentation Arguments
+        - --analytics.endpoint
+        - "http://analytics-{{your_environment}}.endpoints.{{your_google_project_id}}.cloud.goog:80/v1/event" # Update
+        - --analytics.allow-insecure-endpoint
+        - --analytics.config-file-path
+        - "/config/online-services-analytics-config"
+        - --analytics.gcp-key-path
+        - "/secrets/analytics-api-key"
+        - --event.environment
+        - "{{your_environment}}" # Update
+        - --event.schema
+        - "improbable"
+        volumeMounts:
+        - mountPath: /secrets/
+          name: analytics-api-key
+        - mountPath: /config/
+          name: online-services-analytics-config
+      volumes:
+      - name: analytics-api-key
+        secret:
+          secretName: analytics-api-key
+      - name: online-services-analytics-config
+        configMap:
+          name: online-services-analytics-config

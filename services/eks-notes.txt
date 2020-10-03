@@ -1,0 +1,218 @@
+aws eks
+
+Kubernetes assigns service IP addresses from. The
+CIDR block must meet the following requirements:
+• Within one of the following ranges: 10.0.0.0/8, 172.16.0.0.0/12, or 192.168.0.0/16.
+• Between /24 and /12.
+
+
+Amazon EKS does not automatically scale your node group in or out. However, you can
+configure the Kubernetes Cluster Autoscaler to do this for you
+
+might be relevant to redis:
+f you are running a stateful application across multiple Availability Zones that is backed
+by Amazon EBS volumes and using the Kubernetes Cluster Autoscaler (p. 54), you
+should configure multiple node groups, each scoped to a single Availability Zone. In
+addition, you should enable the --balance-similar-node-groups feature.
+
+enable envelope encryption,
+the Kubernetes secrets are encrypted using the customer master key (CMK) that you select.
+The CMK must be symmetric, created in the same region as the cluster
+
+Kubernetes 1.16 upgrade prerequisites
+https://docs.aws.amazon.com/eks/latest/userguide/eks-ug.pdf#what-is-eks
+page 45
+
+The Cluster Autoscaler requires additional IAM and resource tagging considerations that are explained in
+this section.
+
+requires the following tags on your node group Auto Scaling groups so that they
+can be auto-discovered.
+Key 															Value
+k8s.io/cluster-autoscaler/<clustername>		owned
+k8s.io/cluster-autoscaler/enabled 				true
+
+Depending on the version that you need, you may need to change the previous address to
+gcr.io/google-containers/cluster-autoscaler:v1.<n.n> . The image address is
+listed on the releases page
+
+following Kubernetes versions are currently available for new clusters in Amazon EKS:
+• 1.17.9
+• 1.16.13
+• 1.15.11
+• 1.14.9
+
+
+node.kubernetes.io/instance-type 
+Example: node.kubernetes.io/instance-type=m3.medium
+
+Used on: Node
+
+The Kubelet populates this with the instance type as defined by the cloudprovider. This will be set only if you are using a cloudprovider. This setting is handy if you want to target certain workloads to certain instance types, but typically you want to rely on the Kubernetes scheduler to perform resource-based scheduling. You should aim to schedule based on properties rather than on instance types (for example: require a GPU, instead of requiring a g2.2xlarge).
+
+failure-domain.beta.kubernete
+• topology.kubernetes.io/region
+• topology.kubernetes.io/zone
+
+Kubernetes version		Amazon EKS platform version
+1.17.9 							eks.3
+
+Amazon EKS managed node groups automate the provisioning and lifecycle management of nodes
+(Amazon EC2 instances) for Amazon EKS Kubernetes clusters
+All managed nodes are provisioned as part of an Amazon EC2 Auto Scaling group that is managed for
+you by Amazon EKS
+
+Each node group uses the Amazon EKS optimized Amazon Linux 2 AMI
+
+ou can create multiple managed node groups within a single cluster. For example, you could create
+one node group with the standard Amazon EKS optimized Amazon Linux 2 AMI for some workloads
+and another with the GPU variant for workloads that require GPU support.
+
+Each Amazon
+EC2 instance type supports a maximum number of elastic network interfaces (ENIs) and each
+ENI supports a maximum number of IP addresses. Since each worker node and pod is assigned
+its own IP address it's important to choose an instance type that will support the maximum
+number of pods that you want to run on each worker node
+
+ Spot Instances are not supported in node groups
+
+Self-managed nodes
+. A node group is one or more Amazon EC2 instances that
+are deployed in an Amazon EC2 Auto Scaling group. All instances in a node group must:
+
+• Be the same instance type
+• Be running the same Amazon Machine Image (AMI)
+• Use the same Amazon EKS node IAM role (p. 282)
+
+A cluster can contain several node groups. As long as each node group meets the previous requirements,
+the cluster can contain node groups that contain different instance types and host operating systems.
+Each node group can contain several nodes.
+
+u must add the following tag to each node
+kubernetes.io/cluster/<cluster-name> owned
+
+You can control which pods start on Fargate and how they run with Fargate profiles (p. 126), which are
+defined as part of your Amazon EKS cluster
+
+by default each EC2 node and pods on the node get an ip from the same private subnet cidr
+can override this by prodivding a CNI custom network to assign ip addresses to pods from a different subnet
+to the outside world the pod's ip address is the nodes ip address by default (through the nat gateway that lets private subnets talk to public subnet load balancer)
+
+basic flow
+1. create vpc with public and private subnets in at least 2 AZs in 1 region
+2. create the EKS cluster which will get the control plane set upgrade
+3. create node groups/worker nodes in private subnets
+4. deploy apps to pods in nodes
+
+To pull container images, they require access to the Amazon S3 and Amazon ECR APIs (and any
+other container registries, such as DockerHub).
+
+Your VPC must have DNS hostname and DNS resolution support. Otherwise, your nodes cannot register
+with your cluster
+
+VPC tagging requirement
+When you create an Amazon EKS cluster that is earlier than version 1.15, Amazon EKS tags the VPC
+containing the subnets you specify in the following way so that Kubernetes can discover it:
+Key Value
+kubernetes.io/cluster/<cluster-name> shared
+• Key: The <cluster-name> value matches your Amazon EKS cluster's name.
+• Value: The shared value allows more than one cluster to use this VPC.
+This tag is not required or created by Amazon EKS for 1.15 or later clusters. If you deploy a 1.15 or later
+cluster to a VPC that already has this tag, the tag is not removed.
+
+
+Subnet tagging requirement
+When you create your Amazon EKS cluster, Amazon EKS tags the subnets you specify in the following
+way so that Kubernetes can discover them:
+Note
+All subnets (public and private) that your cluster uses for resources should have this tag.
+Key Value
+kubernetes.io/cluster/<cluster-name> shared
+• Key: The <cluster-name> value matches your Amazon EKS cluster.
+• Value: The shared value allows more than one cluster to use this subnet
+
+
+Private subnet tagging requirement for internal load balancers
+Private subnets must be tagged in the following way so that Kubernetes knows it can use the subnets
+for internal load balancers. If you use an Amazon EKS AWS CloudFormation template to create your VPC
+after March 26, 2020, then the subnets created by the template are tagged when they're created. For
+more information about the Amazon EKS AWS CloudFormation VPC templates, see Creating a VPC for
+your Amazon EKS cluster (p. 173).
+Key Value
+kubernetes.io/role/internal-elb 1
+
+
+Public subnet tagging option for external load balancers
+You must tag the public subnets in your VPC so that Kubernetes knows to use only those subnets for
+external load balancers instead of choosing a public subnet in each Availability Zone (in lexicographical
+order by subnet ID). If you use an Amazon EKS AWS CloudFormation template to create your VPC after
+March 26, 2020, then the subnets created by the template are tagged when they're created. For more
+information about the Amazon EKS AWS CloudFormation VPC templates, see Creating a VPC for your
+Amazon EKS cluster (p. 173).
+Key Value
+kubernetes.io/role/elb 1
+
+To
+determine how many pods you can deploy to a node, use the following formula
+(Number of network interfaces for the instance type × (the number of IP addressess per
+ network interface - 1)) + 2
+
+The node must be deployed in a private subnet that has a route to a NAT device in a public subnet.
+• You need to enable external SNAT in the CNI plug-in aws-node DaemonSet with the following
+command:
+
+
+Applications
+Your applications are deployed in containers, which are deployed in pods in Kubernetes. A pod includes
+one or more containers. Typically, one or more pods that provide the same service are deployed in a
+Kubernetes service. Once you've deployed multiple pods that provide the same service, you can:
+• Vertically scale pods up or down with the Kubernetes Vertical Pod Autoscaler (p. 221).
+• Horizontally scale the number of pods needed to meet demand up or down with the Kubernetes
+Horizontal Pod Autoscaler (p. 225).
+• Create an external (for internet-accessible pods) or an internal (for private pods) load
+balancer (p. 228) to balance the traffic load across pods. The load balancer routes traffic at Layer 4 of
+the OSI model.
+• Create an ALB Ingress Controller on Amazon EKS (p. 229) to balance the traffic load across pods. The
+application load balancer routes traffic at Layer 7 of the OSI model.
+
+we
+recommend that you create Kubernetes service accounts for your pods, and associate them
+to AWS IAM accounts. Specifying service accounts enables your pods to have the minimum
+permissions that they require to intera
+
+Amazon EKS supports the Network Load Balancer and the Classic Load Balancer for pods running on
+Amazon EC2 instance nodes through the Kubernetes service of type LoadBalancer
+
+The configuration of your load balancer is controlled by annotations that are added to the manifest for
+your service. By default, Classic Load Balancers are used for LoadBalancer type services. To use the
+Network Load Balancer instead, apply the following annotation to your service:
+service.beta.kubernetes.io/aws-load-balancer-type: nlb
+
+By default, services of type LoadBalancer create public-facing load balancers. To use an internal load
+balancer, apply the following annotation to your service:
+service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+
+Internal load balancer
+In a mixed environment it is sometimes necessary to route traffic from Services inside the same (virtual) network address block.
+
+In a split-horizon DNS environment you would need two Services to be able to route both external and internal traffic to your endpoints.
+
+To set an internal load balancer, add one of the following annotations to your Service depending on the cloud Service provider you're using.
+
+
+Cluster authentication
+Amazon EKS uses IAM to provide authentication to your Kubernetes cluster (through the aws eks gettoken command, available in version 1.16.156 or later of the AWS CLI, or the AWS IAM Authenticator for
+Kubernetes), but it still relies on native Kubernetes Role Based Access Control (RBAC) for authorization.
+This means that IAM is only used for authentication of valid IAM entities. All permissions for interacting
+with your Amazon EKS cluster’s Kubernetes API is managed through the native Kubernetes RBAC system
+
+
+
+
+
+
+
+
+
+
+
